@@ -1,3 +1,5 @@
+Stickleback whole genome poolseq data from 27 Canada and Alaska populations. I would like to use mtDNA consensus sequences (extracted from the Poolseq data) for my final project. I’ve trimmed, mapped, checked coverage, converted to bam.files, deduplicates, marked Indel targets and realignment with GATK. 
+
 1.Trim raw_data with bbduk 
 
 #!/bin/bash
