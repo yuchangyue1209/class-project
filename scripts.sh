@@ -278,4 +278,99 @@ done
 
 echo "All BAM files have been processed. Logs are saved in $OUTPUT_DIR."
 
+9. Create bam.list
+ls -1 /work/cyu/poolseq/PPalign_output/realigned/*.bam > /work/cyu/poolseq/PPalign_output/realigned/bamlist.txt
+
+# merge BAM files (in the order of the file paths in BAMlist.txt) in a MPILEUP file only retaining nucleotides with BQ >20 and reads with MQ > 20
+samtools mpileup -B \
+    -f /work/cyu/chrM_reference.fa \
+    -b bamlist.txt \
+    -q 20 \
+    -Q 20 \
+    | gzip > fish.mpileup.gz
+
+#call SNPs with PoolSNP
+
+
+
+10. Run PoolSNP for SNP calling
+
+bash /home/cyu/.conda/envs/poolseq_env/bin/PoolSNP.sh \
+mpileup=/work/cyu/poolseq/PPalign_output/realigned/fish.mpileup.gz \
+reference=/work/cyu/chrM_reference.fa \
+names=10_THE,11_JOE,12_BEA,13_MUC,14_PYE,16_AMO,17_SAY,18_GOS,19_ROB,1_FG,20_BOOT,21_ECHO,22_FRED,23_LAW,24_PACH,25_RS,26_SC,27_LB,28_CH,2_LG,3_SR,4_SL,5_TL,6_WB,7_WT,8_WK,9_SWA \
+max-cov=0.999 \
+min-cov=10 \
+min-count=3 \
+min-freq=0.001 \
+miss-frac=0.1 \
+jobs=1 \
+BS=1 \
+output=/work/cyu/poolseq/PPalign_output/realigned/snp \
+
+
+
+11. Detect indels using https://github.com/capoony/DrosEU_pipeline.git scripts
+python DetectIndels.py \
+--mpileup /work/cyu/poolseq/PPalign_output/realigned/fish.mpileup.gz \
+--minimum-count 5 \
+--mask 5 \
+| gzip > /work/cyu/poolseq/PPalign_output/realigned/InDel-positions_20.txt.gz
+
+
+
+12. Filter indel using https://github.com/capoony/DrosEU_pipeline.git scripts
+python FilterPosFromVCF.py \
+--indel /work/cyu/poolseq/PPalign_output/realigned/InDel-positions_20.txt.gz \
+--vcf /work/cyu/poolseq/PPalign_output/realigned/snp.vcf.gz \
+| gzip > /work/cyu/poolseq/PPalign_output/realigned/SNPs_clean.vcf.gz
+
+
+13. Navigate to the vcf.file directory
+cd /work/cyu/poolseq/PPalign_output/realigned/
+
+14. Decompress the VCF file and output it as an uncompressed VCF
+gunzip -c /work/cyu/poolseq/PPalign_output/realigned/SNPs_clean.vcf.gz > SNPs_clean.vcf
+
+15. Recompress the VCF file using bgzip (required for indexing with tabix)
+bgzip -c SNPs_clean.vcf > /work/cyu/poolseq/PPalign_output/realigned/SNPs_clean.vcf.gz
+
+16. Index the compressed VCF file using tabix
+tabix -p vcf /work/cyu/poolseq/PPalign_output/realigned/SNPs_clean.vcf.gz
+
+17. Bcftools generated consensus sequences
+
+for sample in 10_THE 11_JOE 12_BEA 13_MUC 14_PYE 16_AMO 17_SAY 18_GOS 19_ROB 1_FG 20_BOOT 21_ECHO 22_FRED 23_LAW 24_PACH 25_RS 26_SC 27_LB 28_CH 2_LG 3_SR 4_SL 5_TL 6_WB 7_WT 8_WK 9_SWA
+do
+  echo "Processing sample: ${sample}"
+  bcftools consensus -f /work/cyu/chrM_reference.fa -s ${sample} /work/cyu/poolseq/PPalign_output/realigned/SNPs_clean.vcf.gz > /work/cyu/poolseq/PPalign_output/realigned/consensus_sequences/${sample}.fa
+done
+
+
+18. Revise header names to population names since the headers should all be chrM
+#!/bin/bash
+
+# Define input directory
+FASTA_DIR="/work/cyu/poolseq/PPalign_output/realigned/consensus_sequences"
+
+# Navigate to the directory
+cd "$FASTA_DIR" || exit
+
+# Process all .fa files
+for file in *.fa; do
+    # Extract population name (remove numeric prefix and underscore)
+    pop_name=$(echo "$file" | sed -E 's/^[0-9]+_//; s/.fa$//')
+
+    # Modify the FASTA header
+    sed -i "1s/>.*/>${pop_name}/" "$file"
+
+    echo "✔ Modified FASTA header for $file to: >${pop_name}"
+done
+
+echo "All FASTA headers have been updated!"
+
+19. Mafft align all fa.files
+cat *.fa > all_haplotypes.fa
+mafft --auto all_haplotypes.fa > all_haplotypes_aligned.fa
+
 
