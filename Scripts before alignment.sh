@@ -369,8 +369,5 @@ done
 
 echo "All FASTA headers have been updated!"
 
-19. Mafft align all fa.files
-cat *.fa > all_haplotypes.fa
-mafft --auto all_haplotypes.fa > all_haplotypes_aligned.fa
 
 
