@@ -1,3 +1,10 @@
+# STEP 14: PHYLOGENETIC TREE USING NJ AND MP METHODS (R + ape + phangorn)
+#############################################
+# Software: R packages 'ape', 'phangorn', 'adegenet'
+# Installation (in R):
+#   install.packages("ape")
+#   install.packages("phangorn")
+#   install.packages("adegenet")
 # Phylogenetic Tree Estimation using NJ and MP methods
 library(ape)
 library(phangorn)
@@ -6,7 +13,7 @@ library(adegenet)
 setwd("/users/changyueyu/desktop/")  # Update the path if needed
 
 # Read the aligned mitochondrial sequences (FASTA format)
-aligned_mt <- read.dna("aligned_mt.fasta", format = "fasta")
+aligned_mt <- read.dna("aligned_mt_overlap.fasta", format = "fasta")
 
 # 2. Distance-Based Phylogenetic Tree (NJ)
 

@@ -1,38 +1,52 @@
-#This script is for NEXUS format converting and run MrBayes
-#Software-MrBayes Bayesian Phylogenetic Inference. MrBayes is a software tool that performs Bayesian inference of phylogeny using Markov Chain Monte Carlo (MCMC) methods to estimate the posterior probability distribution of trees. It allows the use of flexible models of sequence evolution, such as GTR+G (General Time Reversible with gamma-distributed rate variation among sites), and provides posterior probabilities for each clade, offering a measure of confidence in the inferred topology.
-#Assumptions: Input sequences are properly aligned. The chosen substitution model (e.g., GTR+G) accurately reflects the evolutionary process. Sites evolve independently and identically under the same model. The MCMC chain converges given enough generations. Prior distributions are appropriate and do not overly influence the posterior.
-#Strengths: Provides posterior probabilities to quantify uncertainty in tree topology. Supports complex models, including partitioning and relaxed clock models. Can incorporate prior biological knowledge via priors.
-#Limitations: Computationally intensive and slower than maximum likelihood methods. Requires careful convergence diagnostics (e.g., PSRF, ESS). Results may be sensitive to prior choice and model specification.
+# STEP 15: CONVERT FASTA TO NEXUS & RUN MRBAYES
+#############################################
+# Software: MrBayes (http://nbisweden.github.io/MrBayes/)
+# Installation:
+#   conda install -c bioconda mrbayes -y
+#   pip install biopython  # Required for conversion script
 
-# 1. Convert FASTA format to NEXUS format
-# This script converts a multiple sequence alignment in FASTA format
-# into NEXUS format, which is compatible with PopART, BEAST, MrBayes, and PAUP.
+# Description:
+#   MrBayes performs Bayesian phylogenetic inference using MCMC.
+#   This step converts aligned FASTA to NEXUS and runs MrBayes with a standard GTR+G model.
+
+# Python conversion script (uses BioPython)
+# Converts FASTA alignment into NEXUS format with embedded MrBayes block
+
+# Input: /work/cyu/poolseq/PPalign_output/overlap.vcf/consensus/aligned_mt.fasta
+# Output: /work/cyu/poolseq/PPalign_output/overlap.vcf/consensus/aligned_mt_mb.nex
+
+# MrBayes block includes:
+# - GTR+G model (nst=6, rates=gamma)
+# - 1,000,000 generations, 4 chains, sampled every 100 generations
+# - Burn-in of 2,500 samples (25%)
+
+# Assumptions:
+#   - Sequences are properly aligned
+#   - Substitution model matches evolutionary process
+#   - Priors and MCMC settings are appropriate
+
+# Strengths:
+#   - Supports model complexity, uncertainty estimation
+#   - Posterior probabilities give branch support
+
+# Limitations:
+#   - Slower than ML methods
+#   - Requires convergence checks (ESS, PSRF)
+
+# Example Python code for conversion and execution:
 
 from Bio import SeqIO
 
 def fasta_to_nexus(input_fasta, output_nexus):
-    """
-    Convert a FASTA file to NEXUS format for PopART, BEAST, MrBayes, and PAUP.
-    Ensures all sequences have the same length and adds a MrBayes block at the end.
-    """
-
-    # Read FASTA file
     sequences = list(SeqIO.parse(input_fasta, "fasta"))
-
-    # Ensure all sequences have the same length
     seq_lengths = {len(seq.seq) for seq in sequences}
     if len(seq_lengths) > 1:
-        raise ValueError("Error: Sequences have different lengths. Alignment is required.")
+        raise ValueError("Sequences have different lengths. Alignment is required.")
+    n_tax = len(sequences)
+    n_char = len(sequences[0].seq)
 
-    n_tax = len(sequences)              # Number of taxa
-    n_char = len(sequences[0].seq)     # Sequence length
-
-    # Write to NEXUS file
     with open(output_nexus, "w") as nexus:
-        # NEXUS header
         nexus.write("#NEXUS\n\n")
-
-        # TAXA block
         nexus.write("BEGIN TAXA;\n")
         nexus.write(f"  DIMENSIONS NTAX={n_tax};\n")
         nexus.write("  TAXLABELS\n")
@@ -40,7 +54,6 @@ def fasta_to_nexus(input_fasta, output_nexus):
             nexus.write(f"    {seq.id}\n")
         nexus.write("  ;\nEND;\n\n")
 
-        # CHARACTERS block
         nexus.write("BEGIN CHARACTERS;\n")
         nexus.write(f"  DIMENSIONS NCHAR={n_char};\n")
         nexus.write("  FORMAT DATATYPE=DNA MISSING=? GAP=-;\n")
@@ -49,7 +62,6 @@ def fasta_to_nexus(input_fasta, output_nexus):
             nexus.write(f"    {seq.id} {str(seq.seq)}\n")
         nexus.write("  ;\nEND;\n\n")
 
-        # MrBayes block
         nexus.write("BEGIN MRBAYES;\n")
         nexus.write("  set autoclose=yes nowarn=yes;\n")
         nexus.write("  lset nst=6 rates=gamma;\n")
@@ -58,16 +70,13 @@ def fasta_to_nexus(input_fasta, output_nexus):
         nexus.write("  sump burnin=2500;\n")
         nexus.write("END;\n")
 
-# Set input & output file paths
+# Call the function
 input_fasta = "/work/cyu/poolseq/PPalign_output/overlap.vcf/consensus/aligned_mt.fasta"
 output_nexus = "/work/cyu/poolseq/PPalign_output/overlap.vcf/consensus/aligned_mt_mb.nex"
-
-# Run the conversion
 fasta_to_nexus(input_fasta, output_nexus)
 
-print(f"✅ Nexus file with MrBayes block created: {output_nexus}")
 
-#2. run mrbayes
+# run mrbayes
 mb /work/cyu/poolseq/PPalign_output/overlap.vcf/consensus/aligned_mt_mb.nex
 
 

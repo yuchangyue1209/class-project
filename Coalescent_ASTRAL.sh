@@ -1,13 +1,31 @@
-## Coalescent Method Summary: ASTRAL
+# STEP 16: COALESCENT SPECIES TREE INFERENCE (ASTRAL)
+# Software: ASTRAL v5.7.8 (https://github.com/smirarab/ASTRAL)
+# Installation:
+#   git clone https://github.com/smirarab/ASTRAL.git
+#   Requires: Java 8+ (e.g., conda install -c conda-forge openjdk)
 
-| Category        | Description                                                                                              |
-|----------------|----------------------------------------------------------------------------------------------------------|
-| **Description** | ASTRAL is a statistically consistent method for inferring species trees from unrooted gene trees using the multi-species coalescent (MSC) model. It estimates the species tree that agrees with the largest number of quartet trees induced by the set of input gene trees. |
-| **Strengths**   | - Handles incomplete lineage sorting (ILS) well  <br> - Fast and scalable to many genes and taxa <br> - Does not require alignments or concatenated matrices |
-| **Weaknesses**  | - Sensitive to gene tree estimation error <br> - Does not explicitly model gene duplication/loss or horizontal gene transfer <br> - Only uses tree topology (not branch lengths) |
-| **Assumptions** | - Gene trees are independently and accurately inferred <br> - Discordance among gene trees is primarily due to ILS <br> - Genes are unlinked and non-recombining |
-| **User Choices** | I chose ASTRAL because my dataset contains mitochondrial protein-coding gene regions across 27 populations. I generated gene trees using IQ-TREE and used ASTRAL to integrate these into a species tree while accounting for potential ILS among mitochondrial gene histories. |
+# Description:
+#   ASTRAL is a statistically consistent method for inferring species trees from unrooted gene trees using the multi-species coalescent (MSC) model.
+#   It infers the species tree that agrees with the largest number of quartet trees induced from the input gene trees.
 
+# Strengths:
+#   - Handles incomplete lineage sorting (ILS) well
+#   - Scalable and fast, no need for sequence alignment inputs
+#   - Ideal for summarizing across many gene trees
+
+# Weaknesses:
+#   - Sensitive to gene tree errors
+#   - Ignores gene duplication/loss and horizontal transfer
+#   - Only considers topologies (not branch lengths)
+
+# Assumptions:
+#   - Input gene trees are accurate and independent
+#   - Discordance is due to ILS
+#   - Genes are unlinked and non-recombining
+
+# User Choices:
+#   - Used IQ-TREE to infer gene trees from aligned CDS regions (13 PCGs from mitochondrial genome)
+#   - Ran ASTRAL on all .treefile outputs from these gene trees
 
 
 
@@ -140,4 +158,3 @@ echo "Running ASTRAL..."
 java -Xmx8G -jar "$astral_jar" -i "$outdir/all_gene_trees.tre" -o "$outdir/astral_species_tree.tre"
 
 echo "ASTRAL species tree completed: $outdir/astral_species_tree.tre"
-
