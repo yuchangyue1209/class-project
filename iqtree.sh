@@ -31,8 +31,7 @@
 #   - Assumes no recombination and site independence.
 #
 # Example command:
-iqtree -s /work/cyu/poolseq/PPalign_output/overlap.vcf/consensus/all_mt_overlap.fasta \
-       -m GTR+G \
-       -nt AUTO
-
+14. IQtree 
+iqtree -s aligned_mt_overlap.fasta -m GTR+G -bb 1000 -alrt 1000 -nt AUTO
+iqtree -s mc_aligned_mt_overlap.fasta -m GTR+G -bb 1000 -alrt 1000 -nt AUTO
 # Output: IQ-TREE generates .treefile (ML tree), .log (log file), and .iqtree (summary of the run)
